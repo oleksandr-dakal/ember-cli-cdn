@@ -1,9 +1,9 @@
 {
   "name": "ember-cli-cdn",
-  "version": "0.0.0",
-  "description": "The default blueprint for ember-cli addons.",
+  "version": "1.0.0",
+  "description": "Replacing links with CDN links, includes fallbacks, customization.",
   "directories": {
-    "doc": "doc",
+    "config": "config",
     "test": "tests"
   },
   "scripts": {
@@ -11,14 +11,21 @@
     "start": "ember server",
     "test": "ember try:testall"
   },
-  "repository": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dakal-oleksandr/ember-cli-cdn.git"
+  },
   "engines": {
     "node": ">= 0.10.0"
   },
-  "author": "",
+  "author": "Dakal Oleksandr <dakal.oleksandr@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "broccoli-asset-rev": "^2.1.2",
+    "broccoli-cdnizer": "^1.0.0",
+    "broccoli-funnel": "^0.2.13",
+    "broccoli-merge-trees": "^0.2.4",
+    "broccoli-unwatched-tree": "^0.1.1",
     "ember-cli": "1.13.8",
     "ember-cli-app-version": "0.5.0",
     "ember-cli-content-security-policy": "0.4.0",
@@ -32,10 +39,12 @@
     "ember-cli-sri": "^1.0.3",
     "ember-cli-uglify": "^1.2.0",
     "ember-data": "1.13.8",
+    "ember-disable-prototype-extensions": "^1.0.0",
     "ember-disable-proxy-controllers": "^1.0.0",
     "ember-export-application-global": "^1.0.3",
-    "ember-disable-prototype-extensions": "^1.0.0",
-    "ember-try": "0.0.6"
+    "ember-try": "0.0.6",
+    "lodash": "^3.10.1",
+    "minimatch": "^3.0.0"
   },
   "keywords": [
     "ember-addon"
@@ -44,6 +53,7 @@
     "ember-cli-babel": "^5.1.3"
   },
   "ember-addon": {
-    "configPath": "tests/dummy/config"
+    "configPath": "tests/dummy/config",
+    "before": "broccoli-asset-rev"
   }
 }
