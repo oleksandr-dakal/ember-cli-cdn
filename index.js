@@ -1,18 +1,16 @@
-/* jshint node: true */
 'use strict';
 
-// Modules injection
 var path = require('path');
 var _ = require('lodash');
-var minimatch = require('minimatch');
 
 // Broccoli plugins
 var Cdnizer = require('broccoli-cdnizer');
 var Funnel = require('broccoli-funnel');
 var MergeTrees = require('broccoli-merge-trees');
-var unwatchedTree = require('broccoli-unwatched-tree');
+var UnwatchedTree = require('broccoli-unwatched-tree');
 
-// Addon
+var Util = require('./util/util');
+
 module.exports = {
   name: 'ember-cli-cdn',
   included: function (app) {
@@ -20,92 +18,61 @@ module.exports = {
     this._super.included.apply(this, arguments);
 
     // Local variables
-    var usrDefinedOpts = app.options.cdn || {},
-      cdn;
+    var def = app.options.cdn || {},
+      options;
 
-    cdn = {
-      app: app,
+    options = this.options = {
       // Project root
       root: app.project.root,
       // Define if addon enabled
-      enabled: typeof usrDefinedOpts.enabled === 'boolean' ?
-        usrDefinedOpts.enabled : app.env === 'production',
+      enabled: typeof def.enabled === 'boolean' ?
+        def.enabled : app.env === 'production',
       // Cdn files options
-      cdnize: usrDefinedOpts.files || [],
+      cdnize: def.files || [],
       // Path to assets
       assets: path.dirname(app.options.outputPaths.vendor.js)
         .replace(new RegExp('^' + path.sep), ''),
-      // Files that included in vendor's bundle files
-      bunledFiles: [].concat(app.vendorStaticStyles,
-        app.legacyFilesToAppend),
       // Files that will be included to template
-      contentForLinks: [],
-      contentForHTML: ''
+      links: [],
+      content: ''
     };
 
-    if (cdn.enabled) {
-      // Iterate vendor files in order build defines
-      _.forEach(cdn.bunledFiles, function (filePath) {
-        _.forEach(cdn.cdnize, function (opt) {
-          // Match cdn glob
-          if (minimatch(filePath, opt.file || '')) {
-            cdn.contentForLinks.push(filePath);
-          }
-        });
-      });
+    if (options.enabled) {
+      var patterns = _.pluck(options.cdnize, 'file'),
+        extractedStyles = Util.extractItems(app.vendorStaticStyles, patterns),
+        extractedScripts = Util.extractItems(app.legacyFilesToAppend, patterns);
 
-      // Exclude files from bundles
-      app.vendorStaticStyles = _.difference(app.vendorStaticStyles,
-        cdn.contentForLinks);
-      app.legacyFilesToAppend = _.difference(app.legacyFilesToAppend,
-        cdn.contentForLinks);
+      options.links = [].concat(extractedStyles, extractedScripts);
     }
-
-    this.cdn = cdn;
   },
   preBuild: function () {
-    var cdn = this.cdn;
+    var options = this.options;
 
-    if (cdn.enabled) {
-      this.contentForHTML = _.reduce(cdn.contentForLinks,
-        function (acc, filePath) {
-          var link = path.join(cdn.assets, path.basename(filePath));
-
-          return acc + renderTag(link);
-        }, '', this);
-    }
-
-    function renderTag(link) {
-      var extension = path.extname(link),
-        tag = '';
-
-      if (extension === '.js') {
-        tag = '<scr' + 'ipt src="' + link + '" data-original="' + link + '"></scr' + 'ipt>';
-      } else if (extension === '.css') {
-        tag = '<link rel="stylesheet" href="' + link + '" data-original="' + link + '"/>';
-      }
-
-      return tag;
+    if (options.enabled) {
+      options.content = _.reduce(options.links, function (acc, link) {
+        return acc + Util.htmlTag(path.join(options.assets,
+            path.basename(link)));
+      }, '', this);
     }
   },
   contentFor: function (name) {
     if (name === 'cdn') {
-      return this.contentForHTML;
+      return this.options.content;
     }
   },
   postprocessTree: function (type, tree) {
-    var cdn = this.cdn,
+    var options = this.options,
       cdnizeTree, assetsTree;
 
-    if(cdn.enabled && type === 'all'){
+    if (options.enabled && type === 'all') {
       cdnizeTree = new Cdnizer(tree, {
-        files: cdn.cdnize
+        files: options.cdnize
       });
 
-      assetsTree = new Funnel(unwatchedTree(cdn.root), {
-        include: cdn.contentForLinks,
+      assetsTree = new Funnel(UnwatchedTree(options.root), {
+        include: options.links,
         getDestinationPath: function (relativePath) {
-          return path.join(cdn.assets, path.basename(relativePath));
+          return path.join(options.assets, path.basename(relativePath));
         }
       });
 

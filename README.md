@@ -1,4 +1,4 @@
-# Ember-cli-cdn
+# Ember-cli-cdn [![Build Status](https://travis-ci.org/dakal-oleksandr/ember-cli-cdn.svg?branch=master)](https://travis-ci.org/dakal-oleksandr/ember-cli-cdn)
 
 Replacing links with CDN links, includes fallbacks, customization.
 
