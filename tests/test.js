@@ -15,6 +15,10 @@ describe('Utils', function () {
     expect(Util.extractItems).to.be.a('function');
   });
 
+  it('have filterLinks method', function () {
+    expect(Util.filterLinks).to.be.a('function');
+  });
+
   describe('htmlTag', function () {
 
     it('return script tag', function () {
@@ -70,6 +74,26 @@ describe('Utils', function () {
 
   });
 
+  describe('filterLinks', function () {
+    var arr = ['item1.js', 'item2.css'];
+
+    it('filter script links', function () {
+      var res = Util.filterLinks(arr, 'scripts');
+
+      expect(res).to.be.an('array');
+      expect(res).to.include('item1.js');
+      expect(res).to.have.length(1);
+    });
+
+    it('filter styles links', function () {
+      var res = Util.filterLinks(arr, 'styles');
+
+      expect(res).to.be.an('array');
+      expect(res).to.include('item2.css');
+      expect(res).to.have.length(1);
+    });
+  });
+
 });
 
 describe('Html output', function () {
@@ -92,6 +116,5 @@ describe('Html output', function () {
       .join(outPath, 'index.html'), 'utf-8');
 
     expect(indexHtml).to.match(/.*src=".*jquery.*1\.11\.3.*\.js".*/);
-    expect(indexHtml).to.match(/.*src=".*ember.*1\.13\.7.*\.js".*/);
   });
 });

@@ -10,7 +10,7 @@ cache:
     - node_modules
 
 before_install:
-  - "npm install -g npm@^2"
+  - "npm install -g npm@^3"
 
 install:
   - npm install -g bower
