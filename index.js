@@ -17,27 +17,34 @@ module.exports = {
     // Invoke parent method
     this._super.included.apply(this, arguments);
 
-    // Local variables
-    var def = app.options.cdn || {},
-      options;
+    // Defined options
+    var def = app.options.cdn || {};
 
-    options = this.options = {
+    this.options = {
+      app: app,
       // Project root
       root: app.project.root,
+      // Define if to include original assets link
+      original: def.original,
       // Define if addon enabled
-      enabled: typeof def.enabled === 'boolean' ?
-        def.enabled : app.env === 'production',
+      enabled: app.options.cdn &&
+      (typeof def.enabled === 'boolean' ?
+        def.enabled : app.env === 'production'),
       // Cdn files options
       cdnize: def.files || [],
       // Path to assets
       assets: path.dirname(app.options.outputPaths.vendor.js)
         .replace(new RegExp('^' + path.sep), ''),
       // Files that will be included to template
-      links: [],
-      content: ''
+      links: []
     };
 
-    if (options.enabled) {
+  },
+  treeFor: function(type) {
+    var options = this.options,
+      app = options.app;
+
+    if (type === 'vendor' && options.enabled) {
       var patterns = _.pluck(options.cdnize, 'file'),
         extractedStyles = Util.extractItems(app.vendorStaticStyles, patterns),
         extractedScripts = Util.extractItems(app.legacyFilesToAppend, patterns);
@@ -45,19 +52,26 @@ module.exports = {
       options.links = [].concat(extractedStyles, extractedScripts);
     }
   },
-  preBuild: function () {
-    var options = this.options;
-
-    if (options.enabled) {
-      options.content = _.reduce(options.links, function (acc, link) {
-        return acc + Util.htmlTag(path.join(options.assets,
-            path.basename(link)));
-      }, '', this);
-    }
-  },
   contentFor: function (name) {
-    if (name === 'cdn') {
-      return this.options.content;
+    var options = this.options,
+      links;
+
+    if(options.enabled){
+      if(name === 'cdn-scripts'){
+        links = Util.filterLinks(options.links, 'scripts');
+      }
+
+      if(name === 'cdn-styles'){
+        links = Util.filterLinks(options.links, 'styles');
+      }
+
+      if(links) {
+        return _.reduce(links, function (acc, link) {
+          var assetPath = path.join(options.assets, path.basename(link));
+
+          return acc + Util.htmlTag(assetPath, options.original) + '\n';
+        }, '', this);
+      }
     }
   },
   postprocessTree: function (type, tree) {

@@ -2,11 +2,7 @@
   "predef": [
     "document",
     "window",
-    "-Promise",
-    "it",
-    "describe",
-    "before",
-    "after"
+    "-Promise"
   ],
   "browser": true,
   "boss": true,
@@ -33,5 +29,6 @@
   "eqnull": true,
   "esnext": true,
   "unused": true,
-  "node": true
+  "node": true,
+  "mocha": true
 }
